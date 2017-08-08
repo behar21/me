@@ -4,35 +4,36 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import TimeoutException
-#from bs4 import BeautifulSoup
+import progressbar
 import time
 from selenium.webdriver.common.keys import Keys
 import openpyxl
 from selenium.webdriver.support.ui import Select
+import signal
+import sys
+
+def signal_handler(signal, frame):
+        print('You pressed Ctrl+C!')
+        sys.exit(0)
+signal.signal(signal.SIGINT, signal_handler)
+print('Press Ctrl+C')
 
 #-------------- Starts: Load Excel ------------------------
 wb = openpyxl.Workbook()
 wb = openpyxl.load_workbook(filename='smile main sample.xlsm')
 sheets = wb.sheetnames
 ws = wb[sheets[0]]
-print("excel has been loaded")
+
 #-------------- Ends: Load Excel ------------------------
+successBar = progressbar.ProgressBar(maxval=31, \
+    widgets=[progressbar.Bar('=', 'Success bar: [', ']'), ' ', progressbar.Percentage()])
 
-#-------------- Starts: Web Driver ----------------------
-#driver = webdriver.Chrome()
-#driver.set_window_size(1124, 850) 
-#driver.get("https://app.smile-direct.ch/car?lang=de&sac=WOA")
-#wait = WebDriverWait(driver, 3)
-#-------------- Ends: Web Driver ------------------------
 
-#try:
+successBar.start()
 
-#--------------- Stars: first submission page ------------------------------------
-#wait.until(EC.element_to_be_clickable((By.FOR,'markeundtyp_radio')))
-
-print("loop ready to start")
-for i in range(2,101):
+for i in range(2,31):
 	index = str(i)
+	successBar.update(i)
 	# ------------- Starts: Reading Excel -------------------
 	sdId = ws['A'+index].value
 	brand = ws['P'+index].value
@@ -47,15 +48,18 @@ for i in range(2,101):
 	bd = '01.01.1976'
 	deductibleTeil = ws['N'+index].value
 	deductibleVoll = ws['O'+index].value
-	if licenceAge != '5+':
-	    bd == '01.01.1996'
-
+	
+	licenceExperience = 2017-licenceAge
+	
+	if licenceExperience == 4:
+		bd = '01.01.1994'
+	elif licenceExperience < 5:
+		bd = '01.01.1996'
+		
+	
 	zipcode = ws['M2'].value
 
-	licence = '1996'
-	if licenceAge != '5+':
-	    licence = '2015'
-	print("Attributes initialised")
+	
 	#-------------- Ends: Reading Excel ---------------------
 	
 	try:
@@ -64,7 +68,7 @@ for i in range(2,101):
 	
 		driver.get("https://app.smile-direct.ch/car?lang=de&sac=WOA")
 
-		print("Driver has been initialized")
+		
 		driver.find_element_by_xpath("//label[@for='markeundtyp_radio']").click()
 
 		time.sleep(1)
@@ -100,7 +104,8 @@ for i in range(2,101):
 		driver.find_element_by_xpath("//*[@id='fahrzeugLenker.postleitzahl']").send_keys(int(zipcode))
 		time.sleep(1)
 		driver.find_element_by_xpath("//*[@id='anzahlKinder']").send_keys(0)
-		driver.find_element_by_xpath("//*[@id='datumFahrpruefungPkw']").send_keys(licence)
+		time.sleep(1)
+		driver.find_element_by_xpath("//*[@id='datumFahrpruefungPkw']").send_keys(int(licenceAge))
 
 		if use == 'Private':
 			driver.find_element_by_xpath("//*[@id='car_private_label']").click()
@@ -118,66 +123,102 @@ for i in range(2,101):
 		driver.find_element_by_xpath("//*[@id='schaeden']/div[1]/div/label[2]").click()
 		driver.find_element_by_xpath("//*[@id='weiter']").click()
 		#-----------------------------------------------------------------------------------------------------
-		driver.find_element_by_xpath("//*[@id='haftpflicht_content']/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
+		if leasing == 'no':
+			time.sleep(2)
+			driver.find_element_by_xpath("//*[@id='haftpflicht_content']/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div/div/div/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='insassenunfall_acc']/li/div/div/div/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='gfverzicht_mod']/div/ul/li/div/div/div/div/label[1]").click()
+			time.sleep(5)
+			firstValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
+			
+			
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[1]/div/div/label[2]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_inner']/a").click()
+			time.sleep(5)
+			
+			if deductibleTeil == 300:
+				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[3]").click()
+			elif deductibleTeil == 0:
+				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[17]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			secondValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
+			
 		
-		time.sleep(1)
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div/div/div/label[1]").click()
-		time.sleep(1)
-		driver.find_element_by_xpath("//*[@id='insassenunfall_acc']/li/div/div/div/label[1]").click()
-		time.sleep(1)
-		driver.find_element_by_xpath("//*[@id='gfverzicht_mod']/div/ul/li/div/div/div/div/label[1]").click()
-		time.sleep(1)
-		firstValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
-		print(firstValue)
+		
 	
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[1]/div/div/label[2]").click()
-		time.sleep(2)
-		driver.find_element_by_xpath("//*[@id='kasko_inner']/a").click()
-		time.sleep(1)
-		if deductibleTeil == 300:
-			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[3]").click()
-		elif deductibleTeil == 0:
-			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[1]").click()
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[1]/div/div/label[3]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[4]/td[2]/div/div/div/div[1]/label[1]").click()
+			
+			if deductibleTeil == 300:
+
+				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[3]").click()
+			elif deductibleTeil == 0:
+				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[16]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[17]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			thirdValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
+			
+			ws['W'+index] = firstValue
+			ws['X'+index] = secondValue
+			ws['Y'+index] = thirdValue
+		else:
+			
+			driver.find_element_by_xpath("//*[@id='haftpflicht_content']/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_inner']/a").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[1]/div/div/label[3]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[4]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			if deductibleTeil == 300:
+				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[3]").click()
+				
+			elif deductibleTeil == 0:
+				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[16]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='insassenunfall_acc']/li/div/div/div/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[17]/td[2]/div/div/div/div[1]/label[1]").click()
+			time.sleep(5)
+			driver.find_element_by_xpath("//*[@id='assistance_acc']/li/div[1]/div/div/label[1]").click()
+			driver.find_element_by_xpath("//*[@id='gfverzicht_mod']/div/ul/li/div/div/div/div/label[1]").click()
+			thirdValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
+			
+			ws['Y'+index] = thirdValue
 		
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[17]/td[2]/div/div/div/div[1]/label[1]").click()
-		time.sleep(1)
-		secondValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
-		print(secondValue)
 		
-	
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[1]/div/div/label[3]").click()
-		time.sleep(1)
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
-		time.sleep(1)
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[4]/td[2]/div/div/div/div[1]/label[1]").click()
-		if deductibleTeil == 300:
-			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[3]").click()
-		elif deductibleTeil == 0:
-			driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[1]").click()
-		time.sleep(1)
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[16]/td[2]/div/div/div/div[1]/label[1]").click()
-		time.sleep(1)
-		driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[17]/td[2]/div/div/div/div[1]/label[1]").click()
-		time.sleep(2)
-		thirdValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
-		print(thirdValue)
-		driver.quit()
-		ws['W'+index] = firstValue
-		ws['X'+index] = secondValue
-		ws['Y'+index] = thirdValue
-		wb.save("smile main sample.xlsm")
-		driver.quit()
 	except:
-		print "Shit Happened"
-		driver.quit()
+		#print "An error occured at: "+str(sdId)
+		
 		output = open('log.txt','a')
 		output.write("Failed record with ID: "+str(sdId)+"\n")
 		output.close()
+		wb.save("smile main sample.xlsm")
 		pass
 	finally:
-		print("The End")
-
-
+		
+		driver.close()
+		driver.quit()
+wb.save("smile main sample.xlsm")
+successBar.finish()
 
 
 
