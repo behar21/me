@@ -21,24 +21,29 @@ print('Press Ctrl+C')
 
 #-------------- Starts: Load Excel ------------------------
 wb = openpyxl.Workbook()
-wb = openpyxl.load_workbook(filename='smile main sample.xlsm')
+wb = openpyxl.load_workbook(filename='Smile Main Sample - Final.xlsx')
 sheets = wb.sheetnames
-ws = wb[sheets[0]]
+ws = wb[sheets[1]]
 
 #-------------- Ends: Load Excel ------------------------
 
 
-pbar = tqdm(total=1)
+pbar = tqdm(total=10)
 
 try:
-	for i in range(2,3):
+	
+	for i in range(2,12):
+		
 		index = str(i)
 		
 		# ------------- Starts: Reading Excel -------------------
 		sdId = ws['A'+index].value
 		brand = ws['P'+index].value
+		
 		model = ws['T'+index].value+" "+ws['U'+index].value
+		
 		inverhrkersetzung = ws['V'+index].value
+		
 		accessories = ws['R'+index].value
 		leasing = ws['H'+index].value
 		gender = ws['J'+index].value
@@ -50,7 +55,7 @@ try:
 		deductibleVoll = ws['O'+index].value
 	
 		licenceExperience = 2017-licenceAge
-	
+		
 		if licenceExperience == 4:
 			bd = '01.01.1994'
 		elif licenceExperience < 5:
@@ -59,7 +64,7 @@ try:
 	
 		zipcode = ws['M2'].value
 
-	
+		
 		#-------------- Ends: Reading Excel ---------------------
 	
 		try:
@@ -101,7 +106,13 @@ try:
 
 			if nat != 'Schweiz':
 				driver.find_element_by_xpath("//*[@id='bewilligungLenkerLabel']/option[text()='C']").click()
-			driver.find_element_by_xpath("//*[@id='fahrzeugLenker.postleitzahl']").send_keys(int(zipcode))
+			zp = driver.find_element_by_xpath("//*[@id='fahrzeugLenker.postleitzahl']")
+			
+			zp.send_keys(int(zipcode))
+			time.sleep(2)
+			zp.send_keys(Keys.ARROW_DOWN)
+			zp.send_keys(Keys.RETURN)
+			
 			time.sleep(1)
 			driver.find_element_by_xpath("//*[@id='anzahlKinder']").send_keys(0)
 			time.sleep(1)
@@ -124,16 +135,17 @@ try:
 			driver.find_element_by_xpath("//*[@id='schaeden']/div[1]/div/label[2]").click()
 			driver.find_element_by_xpath("//*[@id='weiter']").click()
 			#-----------------------------------------------------------------------------------------------------
+			
 			if leasing == 'no':
 				time.sleep(2)
 				driver.find_element_by_xpath("//*[@id='haftpflicht_content']/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
-				time.sleep(5)
+				time.sleep(1)
 				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div/div/div/label[1]").click()
-				time.sleep(5)
+				time.sleep(1)
 				driver.find_element_by_xpath("//*[@id='insassenunfall_acc']/li/div/div/div/label[1]").click()
-				time.sleep(5)
+				time.sleep(1)
 				driver.find_element_by_xpath("//*[@id='gfverzicht_mod']/div/ul/li/div/div/div/div/label[1]").click()
-				time.sleep(5)
+				time.sleep(1)
 				firstValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
 			
 			
@@ -158,8 +170,10 @@ try:
 				time.sleep(5)
 				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[2]/td[2]/div/div/div/div/label[1]").click()
 				time.sleep(5)
+				
 				driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[4]/td[2]/div/div/div/div[1]/label[1]").click()
-				driver.sleep(3)
+				time.sleep(3)
+				
 				if deductibleTeil == 300:
 
 					driver.find_element_by_xpath("//*[@id='kasko_acc']/li/div[2]/table/tbody/tr[5]/td[2]/div/div/div/div[1]/label[3]").click()
@@ -204,15 +218,15 @@ try:
 				thirdValue = driver.find_element_by_xpath("//*[@id='bruttopraemie']").text
 			
 				ws['Y'+index] = thirdValue
-		
+				time.sleep(5)
 		
 		except:
 			#print "An error occured at: "+str(sdId)
-			pbar.close()
+			#pbar.close()
 			output = open('log.txt','a')
 			output.write("Failed record with ID: "+str(sdId)+"\n")
 			output.close()
-			wb.save("smile main sample.xlsm")
+			wb.save("Smile Main Sample - Final.xlsx")
 			pass
 		finally:
 			pbar.update(1)
@@ -221,7 +235,7 @@ try:
 except:
 	print("External Error")
 finally:
-	wb.save("smile main sample.xlsm")
+	wb.save("Smile Main Sample - Final.xlsx")
 	pbar.close()
 	
 
